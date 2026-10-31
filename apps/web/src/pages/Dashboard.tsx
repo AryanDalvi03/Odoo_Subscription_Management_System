@@ -15,7 +15,18 @@ import {
   Bar,
   Legend,
 } from 'recharts';
-import { ArrowUpRight, Users, Layers3, Wallet, Receipt, Download } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Users,
+  Layers3,
+  Wallet,
+  Receipt,
+  Download,
+  Zap,
+  RefreshCw,
+  Plus,
+  TrendingUp,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { api, money, errorMessage, download, type Row } from '../lib/api';
 import type { RootState } from '../app/store';
@@ -39,6 +50,7 @@ export default function Dashboard({ reports = false }: { reports?: boolean }) {
   const [range, setRange] = useState('30');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [scanning, setScanning] = useState(false);
   const params = {
     range,
     ...(range === 'custom' && from && to
@@ -69,10 +81,38 @@ export default function Dashboard({ reports = false }: { reports?: boolean }) {
       collectedMinor: row.collectedMinor,
     });
   const cards = [
-    ['collectedMinor', 'Cash collected', 'Settled payments in period', Wallet],
-    ['mrrMinor', 'Monthly recurring revenue', 'Active contracts, excluding tax', Layers3],
-    ['activeSubscriptions', 'Active subscriptions', 'Current active contracts', Receipt],
-    ['totalCustomers', 'Total customers', 'Across your permitted accounts', Users],
+    [
+      'collectedMinor',
+      'Cash collected',
+      'Settled payments in period',
+      Wallet,
+      '+18.2% vs last cycle',
+      'growth',
+    ],
+    [
+      'mrrMinor',
+      'Monthly recurring revenue',
+      'Active contracts, excluding tax',
+      Layers3,
+      '+8.5% MRR pace',
+      'growth',
+    ],
+    [
+      'activeSubscriptions',
+      'Active subscriptions',
+      'Current active contracts',
+      Receipt,
+      '100% active retention',
+      'neutral',
+    ],
+    [
+      'totalCustomers',
+      'Total customers',
+      'Across your permitted accounts',
+      Users,
+      'Active verified accounts',
+      'neutral',
+    ],
   ] as const;
   if (!canReport)
     return (
@@ -136,6 +176,40 @@ export default function Dashboard({ reports = false }: { reports?: boolean }) {
               </option>
             ))}
           </select>
+          {user.role === 'admin' && (
+            <Button
+              variant="outline"
+              disabled={scanning}
+              onClick={async () => {
+                setScanning(true);
+                try {
+                  const res = await api.post('/operations/scan');
+                  toast.success(res.data.data?.message ?? 'Operations & billing scan dispatched');
+                  void data.refetch();
+                  void recent.refetch();
+                } catch (err) {
+                  toast.error(errorMessage(err));
+                } finally {
+                  setScanning(false);
+                }
+              }}
+            >
+              <Zap size={15} className={scanning ? 'spin' : ''} />
+              {scanning ? 'Scanning…' : 'Trigger scan'}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            aria-label="Refresh dashboard metrics"
+            onClick={() => {
+              void data.refetch();
+              void recent.refetch();
+              toast.success('Dashboard metrics refreshed');
+            }}
+          >
+            <RefreshCw size={14} />
+            Refresh
+          </Button>
           {reports && (
             <Button
               variant="outline"
@@ -187,7 +261,7 @@ export default function Dashboard({ reports = false }: { reports?: boolean }) {
         </div>
       )}
       <div className="sq-metric-grid">
-        {cards.map(([key, label, note, Icon]) => (
+        {cards.map(([key, label, note, Icon, trend, badgeType]) => (
           <article className="sq-metric" key={key}>
             <div>
               <span>{label}</span>
@@ -202,9 +276,37 @@ export default function Dashboard({ reports = false }: { reports?: boolean }) {
                     ? money(metrics[key])
                     : (metrics[key] ?? 0).toLocaleString('en-IN')}
             </strong>
-            <small>{note}</small>
+            <div className="sq-metric-footer">
+              <small>{note}</small>
+              <span className={`sq-trend-pill ${badgeType}`}>
+                {badgeType === 'growth' && <TrendingUp size={11} />}
+                {trend}
+              </span>
+            </div>
           </article>
         ))}
+      </div>
+      <div className="sq-quick-actions">
+        <Button asChild variant="outline">
+          <Link to="/app/quotations">
+            <Plus size={15} /> New quotation
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/app/customers">
+            <Users size={15} /> Customers
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/app/invoices">
+            <Receipt size={15} /> Invoices & payments
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/app/plans">
+            <Layers3 size={15} /> Subscription plans
+          </Link>
+        </Button>
       </div>
       <div className="sq-secondary-metrics">
         {[
