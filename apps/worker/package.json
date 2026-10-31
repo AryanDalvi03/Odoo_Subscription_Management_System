@@ -1,0 +1,22 @@
+{
+  "name": "@subscriptiq/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@subscriptiq/api": "^0.1.0",
+    "@subscriptiq/contracts": "0.1.0",
+    "@subscriptiq/domain": "0.1.0",
+    "bullmq": "^6.5.3",
+    "ioredis": "^6.0.0",
+    "mongoose": "^9.11.4",
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
+  }
+}

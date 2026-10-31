@@ -1,0 +1,54 @@
+services:
+  - type: web
+    name: subscriptiq-api
+    runtime: docker
+    dockerfilePath: ./infra/docker/node.Dockerfile
+    dockerContext: .
+    dockerCommand: node apps/api/dist/index.js
+    healthCheckPath: /api/health/live
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY_HOPS
+        value: 1
+      - key: WEB_ORIGIN
+        sync: false
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: SETUP_TOKEN
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+  - type: worker
+    name: subscriptiq-worker
+    runtime: docker
+    dockerfilePath: ./infra/docker/node.Dockerfile
+    dockerContext: .
+    dockerCommand: node apps/worker/dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: MAIL_TRANSPORT
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false

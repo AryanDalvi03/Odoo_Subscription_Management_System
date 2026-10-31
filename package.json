@@ -1,0 +1,48 @@
+{
+  "name": "subscriptiq",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0 <23"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n contracts,api,worker,web \"npm run dev -w @subscriptiq/contracts\" \"npm run dev -w @subscriptiq/api\" \"npm run dev -w @subscriptiq/worker\" \"npm run dev -w @subscriptiq/web\"",
+    "build": "npm run build -w @subscriptiq/contracts && npm run build -w @subscriptiq/domain && npm run build -w @subscriptiq/ui && npm run build -w @subscriptiq/api && npm run build -w @subscriptiq/worker && npm run build -w @subscriptiq/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "jest --runInBand",
+    "test:integration": "tsx scripts/check-infrastructure.ts",
+    "test:e2e": "playwright test",
+    "infra:up": "docker compose up -d --wait mongo redis",
+    "infra:down": "docker compose down",
+    "check": "npm run typecheck && npm test && npm run build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "predev": "npm run build -w @subscriptiq/contracts && npm run build -w @subscriptiq/domain && npm run build -w @subscriptiq/ui && npm run build -w @subscriptiq/api",
+    "configure": "tsx scripts/configure-local.ts",
+    "test:services": "tsx scripts/test-services.ts",
+    "test:workers": "tsx tests/integration/workers.ts",
+    "test:load": "tsx scripts/load-test.ts",
+    "deploy:config": "tsx scripts/configure-vercel.ts",
+    "test:docker": "tsx scripts/smoke-docker.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.6",
+    "@types/supertest": "^7.2.1",
+    "concurrently": "^10.0.6",
+    "dotenv": "^18.0.9",
+    "jest": "^30.5.2",
+    "nock": "^15.0.5",
+    "prettier": "^3.9.10",
+    "supertest": "^7.3.1",
+    "ts-jest": "^29.4.15",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3"
+  }
+}

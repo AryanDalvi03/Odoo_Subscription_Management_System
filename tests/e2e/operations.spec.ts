@@ -1,0 +1,71 @@
+import { test, expect } from '@playwright/test';
+test('administrator bootstraps, configures catalog and completes invoice/payment flow', async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/setup-admin');
+  await page.getByLabel('Full name', { exact: true }).fill('Browser Administrator');
+  await page.getByLabel('Email address').fill('browser-admin@example.test');
+  await page.getByLabel('Password', { exact: true }).fill('BrowserTest!94321');
+  await page.getByRole('button', { name: 'Create administrator' }).click();
+  await expect(page.getByRole('heading', { name: 'Good to see you, Browser.' })).toBeVisible();
+  await page.getByRole('link', { name: 'Products', exact: true }).click();
+  await page.getByRole('button', { name: 'New product', exact: true }).click();
+  await page.getByLabel('Name', { exact: true }).fill('Accounting Software');
+  await page.getByLabel('Sales price (INR)').fill('1000');
+  await page.getByLabel('Cost price (INR)').fill('200');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByText('Accounting Software', { exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Plans', exact: true }).click();
+  await page.getByRole('button', { name: 'New plan', exact: true }).click();
+  await page.getByLabel('Name', { exact: true }).fill('Monthly Standard');
+  await page.getByRole('button', { name: 'Add product line' }).click();
+  await page
+    .getByLabel('Product 1', { exact: true })
+    .selectOption({ label: 'Accounting Software' });
+  await page.getByLabel('Unit price 1 in INR').fill('1000');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Customers', exact: true }).click();
+  await page.getByRole('button', { name: 'New customer', exact: true }).click();
+  await page.getByLabel('Name', { exact: true }).fill('Browser Customer');
+  await page.getByLabel('Email', { exact: true }).fill('browser-customer@example.test');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Subscriptions', exact: true }).click();
+  await page.getByRole('button', { name: 'New subscription', exact: true }).click();
+  await page.getByLabel('Customer', { exact: true }).selectOption({ label: 'Browser Customer' });
+  await page.getByLabel('Plan', { exact: true }).selectOption({ label: 'Monthly Standard' });
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  const run = async (name: string) => {
+    await page.getByLabel('More actions', { exact: true }).first().click();
+    await page.getByRole('button', { name, exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  };
+  await run('Confirm');
+  await run('Activate');
+  await run('Preview draft invoice');
+  await page.getByRole('link', { name: 'Invoices', exact: true }).click();
+  await expect(page.getByText('draft', { exact: true })).toBeVisible();
+  await run('Confirm invoice');
+  await expect(page.getByRole('cell', { name: '₹1,000.00', exact: false }).first()).toBeVisible();
+  await page.getByLabel('More actions', { exact: true }).first().click();
+  await page.getByRole('button', { name: 'Record payment', exact: true }).click();
+  await page.getByLabel('Transaction reference').fill('BROWSER-TRANSFER-001');
+  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByText('paid', { exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Dashboard', exact: true }).click();
+  await expect(page.getByText('₹1,000.00', { exact: true }).first()).toBeVisible();
+  await page.screenshot({ path: 'test-results/admin-dashboard.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: 'test-results/admin-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/admin-mobile.png', fullPage: true });
+  expect(errors).toEqual([]);
+});

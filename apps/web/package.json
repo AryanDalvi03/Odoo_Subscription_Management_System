@@ -1,0 +1,43 @@
+{
+  "name": "@subscriptiq/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^6.0.2",
+    "@radix-ui/react-slot": "^1.5.0",
+    "@reduxjs/toolkit": "^2.13.0",
+    "@sentry/react": "^11.10.0",
+    "@subscriptiq/contracts": "0.1.0",
+    "@subscriptiq/ui": "0.1.0",
+    "@tanstack/react-query": "^5.105.0",
+    "axios": "^1.21.0",
+    "class-variance-authority": "^0.7.1",
+    "lucide-react": "^1.65.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-hook-form": "^7.91.0",
+    "react-redux": "^9.3.1",
+    "react-router-dom": "^7.18.5",
+    "recharts": "^3.10.1",
+    "sonner": "^2.0.8",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jest-environment-jsdom": "^30.5.2",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.5"
+  }
+}
