@@ -12,6 +12,8 @@ import {
   Pencil,
   Archive,
   MoreHorizontal,
+  Zap,
+  Printer,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { RootState } from '../app/store';
@@ -913,6 +915,32 @@ function RecordDetails({ row }: { row: Row }) {
   ];
   return (
     <div className="sq-record-details">
+      {Boolean(row.frequency && (row.startAt || row.createdAt)) && (
+        <div className="sq-stepper">
+          <div className="sq-step done">
+            <div className="sq-step-dot" />
+            <span>Created</span>
+            <small>{displayDate(row.createdAt ?? row.startAt)}</small>
+          </div>
+          <div className={`sq-step ${row.status !== 'draft' ? 'done' : 'current'}`}>
+            <div className="sq-step-dot" />
+            <span>{row.status === 'draft' ? 'Draft Quote' : 'Confirmed'}</span>
+            <small>{String(row.status)}</small>
+          </div>
+          <div
+            className={`sq-step ${row.status === 'active' ? 'current' : row.status === 'closed' || row.status === 'cancelled' ? 'done' : ''}`}
+          >
+            <div className="sq-step-dot" />
+            <span>Recurring Billing</span>
+            <small>{String(row.frequency)}</small>
+          </div>
+          <div className="sq-step">
+            <div className="sq-step-dot" />
+            <span>Next Renewal</span>
+            <small>{row.nextBillingAt ? displayDate(row.nextBillingAt) : '—'}</small>
+          </div>
+        </div>
+      )}
       <dl>
         {fields
           .filter((field) => row[field])
@@ -1003,6 +1031,81 @@ function RecordDetails({ row }: { row: Row }) {
               Outstanding <strong>{money(row.outstandingMinor)}</strong>
             </span>
           )}
+        </div>
+      )}
+      {Boolean(
+        row.number &&
+        String(row.number).startsWith('INV-') &&
+        (row.outstandingMinor === undefined || Number(row.outstandingMinor) > 0),
+      ) && (
+        <div className="sq-upi-qr-card">
+          <div className="sq-upi-qr-frame">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+                `upi://pay?pa=brightloop@upi&pn=Brightloop+Software&mc=0000&tid=${row.number}&tr=${row.number}&am=${(
+                  Number(row.outstandingMinor ?? row.totalMinor) / 100
+                ).toFixed(2)}&cu=INR`,
+              )}`}
+              alt="Scan & Pay via UPI"
+              width={120}
+              height={120}
+            />
+            <small>Scan with GPay / PhonePe / Paytm / BHIM</small>
+          </div>
+          <div className="sq-upi-details">
+            <h4>Instant UPI & Card Settlement</h4>
+            <p>
+              Scan the QR code directly from your mobile UPI app, or click below to settle instantly
+              without leaving the screen.
+            </p>
+            <div className="sq-upi-meta">
+              <span>
+                VPA: <strong>brightloop@upi</strong>
+              </span>
+              <span>
+                Due:{' '}
+                <strong className="due-amount">
+                  {money(row.outstandingMinor ?? row.totalMinor)}
+                </strong>
+              </span>
+            </div>
+            <div className="sq-upi-actions">
+              <Button
+                className="sq-upi-btn"
+                onClick={async () => {
+                  try {
+                    await api.post(`/payments/upi/${row._id}`);
+                    toast.success('Instant UPI Payment confirmed! Invoice settled.');
+                    window.location.reload();
+                  } catch (err) {
+                    toast.error(errorMessage(err));
+                  }
+                }}
+              >
+                <Zap size={14} /> Pay via Instant UPI
+              </Button>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    await payInvoice(row);
+                  } catch (err) {
+                    toast.error(errorMessage(err));
+                  }
+                }}
+              >
+                Razorpay Checkout
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  void printInvoice(row).catch((err) => toast.error(errorMessage(err)));
+                }}
+              >
+                <Printer size={14} /> Print Invoice
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -97,5 +97,15 @@ export function operationRoutes(config: AuthConfig) {
     await audit(actorOf(res), 'retried', 'Notification', row._id);
     res.json({ data: { message: 'Notification queued for retry' } });
   });
+  router.post('/scan', async (_req, res) => {
+    const operationsQueue = connect(queueNames[0]);
+    try {
+      const job = await operationsQueue.add('scan', {}, { priority: 1 });
+      await audit(actorOf(res), 'triggered', 'OperationsScan', job.id);
+      res.json({ data: { message: 'Operations & billing scan dispatched', jobId: job.id } });
+    } finally {
+      await operationsQueue.close();
+    }
+  });
   return router;
 }
